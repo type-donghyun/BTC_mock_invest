@@ -6,6 +6,7 @@
 <head>
 <title>메인 페이지</title>
 </head>
+
 <body>
 	<h1>비트코인 모의 투자 플랫폼</h1>
 
@@ -19,6 +20,7 @@
 		<c:otherwise>
 			<p>로그인하지 않은 상태입니다.</p>
 			<a href="/signin">로그인</a>
+			
 		</c:otherwise>
 	</c:choose>
 </body>
