@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 public class PriceCache {
 
     private BigDecimal cachedPrice = null;
+    private volatile double currentPrice = 0.0;
 
     public void updatePrice(BigDecimal price) {
         this.cachedPrice = price;
@@ -17,5 +18,12 @@ public class PriceCache {
 
     public BigDecimal getCachedPrice() {
         return this.cachedPrice;
+    }
+   
+    public double getCurrentPrice() {
+        return currentPrice;
+    }
+    public void updatePrice(double price) {
+        this.currentPrice = price;
     }
 }
