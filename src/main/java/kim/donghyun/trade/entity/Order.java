@@ -2,6 +2,7 @@ package kim.donghyun.trade.entity;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -12,6 +13,7 @@ import jakarta.persistence.Table;
 import kim.donghyun.trade.entity.enums.OrderMode;
 import kim.donghyun.trade.entity.enums.OrderStatus;
 import kim.donghyun.trade.entity.enums.OrderType;
+import kim.donghyun.trade.entity.enums.TradeMode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -49,4 +51,8 @@ public class Order {
 
     private LocalDateTime createdAt;
     private LocalDateTime executedAt; // 체결 시각 (nullable)
+    
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TradeMode tradeMode;
 }

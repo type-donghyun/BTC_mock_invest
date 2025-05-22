@@ -12,6 +12,7 @@ import kim.donghyun.trade.entity.Order;
 import kim.donghyun.trade.entity.enums.OrderStatus;
 import kim.donghyun.trade.entity.enums.OrderType;
 import kim.donghyun.trade.repository.OrderRepository;
+import kim.donghyun.trade.service.PositionService;
 import kim.donghyun.trade.service.WalletService;
 import kim.donghyun.trade.websocket.OrderPushService;
 import kim.donghyun.util.PriceCache;
@@ -26,8 +27,9 @@ public class LimitOrderMatcher {
     private final OrderRepository orderRepository;
     private final WalletService walletService;
     private final PriceCache priceCache;
-
+    private final PositionService positionService;
     private final OrderPushService orderPushService;
+
     
     @Scheduled(fixedDelay = 1000) // 5초마다 실행
     @Transactional
@@ -61,10 +63,20 @@ public class LimitOrderMatcher {
                         order.getId(),
                         order.getUserId(),
                         order.getOrderType().name(),
+                        order.getTradeMode().name(),   // ✅ 여기 추가
                         order.getPrice(),
                         order.getQuantity(),
-                        order.getExecutedAt().toString()
+                        order.getExecutedAt().toString(),
+                        0.0
                     );
+                    
+                    // 수익률 계산 후 메시지에 셋팅
+                    positionService.getOpenPosition(order.getUserId(), order.getTradeMode())
+                    .ifPresent(pos -> {
+                        double pnl = positionService.calculatePnlPercent(pos, currentPrice);
+                        message.setPnlPercent(pnl); // 🔥 수익률 포함
+                    });
+                    
                     orderPushService.sendExecutedMessage(message);
 
 

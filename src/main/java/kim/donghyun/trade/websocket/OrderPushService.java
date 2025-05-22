@@ -14,6 +14,7 @@ public class OrderPushService {
 
     private final Map<Long, WebSocketSession> userSessions = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private double pnlPercent; // 체결 당시 수익률 (%)
 
     public void registerSession(Long userId, WebSocketSession session) {
         userSessions.put(userId, session);
