@@ -1,20 +1,29 @@
 package kim.donghyun.config;
 
-import kim.donghyun.trade.websocket.OrderWebSocketHandler;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.socket.config.annotation.*;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 @Configuration
-@EnableWebSocket
-@RequiredArgsConstructor
-public class WebSocketConfig implements WebSocketConfigurer {
-
-    private final OrderWebSocketHandler orderWebSocketHandler;
+@EnableWebSocketMessageBroker // ⭐ STOMP 메시지 브로커 사용
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
-    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(orderWebSocketHandler, "/ws/order")
-                .setAllowedOrigins("*");
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // 클라이언트에서 연결할 WebSocket endpoint
+        registry.addEndpoint("/ws/order")
+                .setAllowedOriginPatterns("*") // CORS 허용
+                .withSockJS(); // ⭐ SockJS fallback
+    }
+
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry registry) {
+        // 서버 → 클라이언트 브로드캐스트 경로
+        registry.enableSimpleBroker("/topic");
+
+        // 클라이언트 → 서버 요청 경로 prefix (ex: /app/sendOrder)
+        registry.setApplicationDestinationPrefixes("/app");
     }
 }

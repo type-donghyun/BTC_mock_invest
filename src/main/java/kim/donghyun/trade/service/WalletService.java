@@ -1,9 +1,12 @@
 package kim.donghyun.trade.service;
 
+import org.springframework.stereotype.Service;
+
+import kim.donghyun.trade.entity.Position;
 import kim.donghyun.trade.entity.Wallet;
+import kim.donghyun.trade.entity.enums.TradeMode;
 import kim.donghyun.trade.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -110,5 +113,29 @@ public class WalletService {
         if (leverage < MIN_LEVERAGE || leverage > MAX_LEVERAGE) {
             throw new IllegalArgumentException("레버리지는 1배에서 100배 사이로 설정해야 합니다.");
         }
+    }
+    
+    private double calculatePnL(Position pos, double currentPrice) {
+    	double entry = pos.getEntryPrice();
+    	double leverage = pos.getLeverage();
+    	double qty = pos.getQuantity();
+    	
+    	if (pos.getTradeMode() == TradeMode.LONG) {
+    		return (currentPrice - entry) * qty * leverage;
+    	} else if (pos.getTradeMode() == TradeMode.SHORT) {
+    		return (entry - currentPrice) * qty * leverage;
+    	} else {
+    		return 0.0;
+    	}
+    }
+    
+    // 강제청산
+    public void liquidatePosition(Position pos, double price) {
+        Wallet wallet = walletRepository.findByUserId(pos.getUserId())
+            .orElseThrow(() -> new RuntimeException("지갑 없음"));
+
+        double pnl = calculatePnL(pos, price);
+        wallet.setUsdtBalance(wallet.getUsdtBalance() + pnl); // 손익 반영
+        walletRepository.save(wallet);
     }
 }

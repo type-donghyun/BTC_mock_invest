@@ -1,12 +1,15 @@
 package kim.donghyun.trade.service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import kim.donghyun.trade.entity.Position;
+import kim.donghyun.trade.entity.PositionHistory;
 import kim.donghyun.trade.entity.enums.TradeMode;
+import kim.donghyun.trade.repository.PositionHistoryRepository;
 import kim.donghyun.trade.repository.PositionRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -15,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class PositionService {
 
     private final PositionRepository positionRepository;
+    private final PositionHistoryRepository positionHistoryRepository;
 
     /**
      * 진입가 가중 평균 계산
@@ -36,6 +40,8 @@ public class PositionService {
                 newPos.setTradeMode(TradeMode.LONG);
                 newPos.setLeverage(leverage);
                 newPos.setOpen(true);
+             // ✅ 진입 시각 세팅
+                newPos.setCreatedAt(LocalDateTime.now());
                 return newPos;
             });
 
@@ -139,5 +145,21 @@ public class PositionService {
         }
 
         return Math.round(pnl * 100.0) / 100.0; // 소수점 2자리 반올림
+    }
+    
+    public void savePositionHistory(Position pos, double exitPrice, double pnlPercent) {
+        PositionHistory history = PositionHistory.builder()
+                .userId(pos.getUserId())
+                .tradeMode(pos.getTradeMode())
+                .entryPrice(pos.getEntryPrice())
+                .exitPrice(exitPrice)
+                .quantity(pos.getQuantity())
+                .leverage(pos.getLeverage())
+                .pnlPercent(pnlPercent)
+                .entryAt(pos.getCreatedAt()) // 또는 진입 시각 필드
+                .exitAt(LocalDateTime.now())
+                .build();
+
+        positionHistoryRepository.save(history);
     }
 }
