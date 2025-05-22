@@ -8,9 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import kim.donghyun.trade.entity.Position;
 import kim.donghyun.trade.repository.PositionRepository;
+import kim.donghyun.trade.service.OrderPushService;
 import kim.donghyun.trade.service.PositionService;
 import kim.donghyun.trade.service.WalletService;
-import kim.donghyun.trade.service.OrderPushService; 
 import kim.donghyun.util.PriceCache;
 import lombok.RequiredArgsConstructor;
 
@@ -32,7 +32,10 @@ public class PositionLiquidationScheduler {
 
         for (Position pos : openPositions) {
             double pnl = positionService.calculatePnlPercent(pos, currentPrice);
-            if (pnl <= -90.0) { // 강제 청산 조건
+            double mmRate = getMaintenanceMarginRate(pos.getLeverage()); // 유지 마진 비율
+            double liquidationThreshold = -(1 - mmRate) * 100; // 청산 수익률 기준 (예: -95%)
+
+            if (pnl <= liquidationThreshold) {
                 // 포지션 종료 처리
                 pos.setOpen(false);
                 positionRepository.save(pos);
@@ -42,11 +45,19 @@ public class PositionLiquidationScheduler {
 
                 // WebSocket 메시지 전송
                 orderPushService.sendLiquidationMessage(pos, currentPrice, pnl);
-                
+
                 // 포지션 이력 저장
                 positionService.savePositionHistory(pos, currentPrice, pnl);
             }
         }
     }
-}
 
+    // ✅ 유지 마진율 계산 함수 (간단한 버전)
+    private double getMaintenanceMarginRate(double leverage) {
+        if (leverage <= 5) return 0.01;
+        else if (leverage <= 10) return 0.03;
+        else if (leverage <= 25) return 0.05;
+        else if (leverage <= 50) return 0.10;
+        else return 0.15; // 100x 이상
+    }
+}

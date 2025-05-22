@@ -162,4 +162,14 @@ public class PositionService {
 
         positionHistoryRepository.save(history);
     }
+
+    // 유지 마진율 계산 함수
+    private double getMaintenanceMarginRate(double leverage) {
+        if (leverage <= 5) return 0.01;
+        else if (leverage <= 10) return 0.03;
+        else if (leverage <= 25) return 0.05;
+        else if (leverage <= 50) return 0.10;
+        else return 0.15; // 100x 이상
+    }
+
 }
